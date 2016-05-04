@@ -37,3 +37,24 @@ if($universalLibs) {
 	}
 }
 Remove-Variable -Name universalLibs
+
+<#
+	Make functions available to module
+#>
+$Public = Get-ChildItem -LiteralPath "$PSScriptRoot\Public" -Recurse -Include "*.ps1" -File
+$Private = Get-ChildItem -LiteralPath "$PSScriptRoot\Private" -Recurse -Include "*.ps1" -File
+
+($Public + $Private) | ForEach-Object -Begin {
+	Write-Verbose -Message "Loading functions..."
+} -Process {
+	. $PSItem.FullName
+} -End {
+	$Public | ForEach-Object -Begin {
+		Write-Verbose -Message "Register public functions..."
+	} -Process {
+		Export-ModuleMember -Function $PSItem.BaseName
+	} -End {
+		Write-Verbose -Message "Finished registraton of public functions."
+	}
+	Write-Verbose -Message "Finsihed loading functions."
+}
